@@ -154,7 +154,7 @@ h1, h2, h3, .header-tag {
   background-color: #F1F5F9;
 }
 
-/* Financial Results Grid */
+/* Financial Results 2x2 Grid */
 .metrics-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -168,10 +168,10 @@ h1, h2, h3, .header-tag {
   border: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
 }
 
 .metric-box.highlight {
-  grid-column: span 2;
   background: var(--navy-light);
   border-color: var(--navy-primary);
 }
@@ -185,40 +185,42 @@ h1, h2, h3, .header-tag {
 }
 
 .metric-value {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: bold;
   font-family: var(--font-serif);
   color: var(--navy-dark);
   margin-top: 0.2rem;
 }
 
-/* Visual Bar */
-.breakdown-container {
-  margin-top: 1.5rem;
+.metric-sublabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.3rem;
 }
 
-.breakdown-container h3 {
-  font-size: 0.95rem;
-  margin-bottom: 0.6rem;
-  color: var(--navy-primary);
+.metric-sublabel strong {
+  color: var(--text-dark);
 }
 
+/* Visual Bar (Inside Box 4) */
 .progress-bar-wrapper {
   display: flex;
-  height: 26px;
+  height: 32px;
   border-radius: 3px;
   overflow: hidden;
   font-size: 0.75rem;
   color: white;
   text-align: center;
-  line-height: 26px;
+  line-height: 32px;
   font-weight: bold;
+  margin-top: 0.5rem;
 }
 
-.principal-color { background-color: var(--navy-primary); }
-.interest-color { background-color: #9B2C2C; }
+/* Green for Principal, Red for Interest */
+.principal-color { background-color: #2E7D32; }
+.interest-color { background-color: #C53030; }
 
-/* Table */
+/* Table Section */
 .amortization-section {
   margin-bottom: 3rem;
 }
@@ -287,8 +289,5 @@ h1, h2, h3, .header-tag {
   }
   .metrics-grid {
     grid-template-columns: 1fr;
-  }
-  .metric-box.highlight {
-    grid-column: span 1;
   }
 }
