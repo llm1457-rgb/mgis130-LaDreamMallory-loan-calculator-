@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Loan & Mortgage Calculator | MGIS130</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="container">
+      <h1>Smart Loan Calculator</h1>
+      <p class="subtitle">MGIS130 Information Systems Architecture Demonstration</p>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <!-- UI Layer: Input Controls -->
+    <section class="card input-card">
+      <h2>1. Enter Loan Details</h2>
+      <form id="loan-form">
+        <div class="form-group">
+          <label for="loan-amount">Loan Amount ($)</label>
+          <input type="number" id="loan-amount" min="1000" step="500" value="25000" required />
+        </div>
+
+        <div class="form-group">
+          <label for="interest-rate">Annual Interest Rate (%)</label>
+          <input type="number" id="interest-rate" min="0.1" max="30" step="0.1" value="5.5" required />
+        </div>
+
+        <div class="form-group">
+          <label for="loan-term">Loan Term (Years)</label>
+          <select id="loan-term" required>
+            <option value="3">3 Years (36 Months)</option>
+            <option value="5" selected>5 Years (60 Months)</option>
+            <option value="15">15 Years (180 Months)</option>
+            <option value="30">30 Years (360 Months)</option>
+          </select>
+        </div>
+
+        <button type="submit" id="calc-btn" class="btn-primary">Calculate Payment</button>
+        <button type="button" id="reset-btn" class="btn-secondary">Reset Defaults</button>
+      </form>
+      <div id="error-message" class="error-banner hidden"></div>
+    </section>
+
+    <!-- UI Layer: Results Display -->
+    <section class="card results-card">
+      <h2>2. Payment Summary</h2>
+      <div class="metrics-grid">
+        <div class="metric-box highlight">
+          <span class="metric-label">Monthly Payment</span>
+          <span class="metric-value" id="monthly-payment">$0.00</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Total Interest Paid</span>
+          <span class="metric-value" id="total-interest">$0.00</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Total Principal + Interest</span>
+          <span class="metric-value" id="total-payment">$0.00</span>
+        </div>
+      </div>
+
+      <div class="breakdown-container">
+        <h3>Visual Cost Breakdown</h3>
+        <div class="progress-bar-wrapper">
+          <div id="principal-bar" class="bar-segment principal-color" style="width: 50%;">Principal</div>
+          <div id="interest-bar" class="bar-segment interest-color" style="width: 50%;">Interest</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- UI Layer: Data Table Toggle -->
+  <section class="container amortization-section">
+    <div class="card">
+      <div class="accordion-header">
+        <h2>Amortization Schedule (First Year)</h2>
+        <button id="toggle-table-btn" class="btn-small">Show Schedule</button>
+      </div>
+      <div id="table-wrapper" class="hidden">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Payment</th>
+              <th>Principal</th>
+              <th>Interest</th>
+              <th>Remaining Balance</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-body">
+            <!-- Dynamic Rows Injected by Processing Layer -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer class="app-footer">
+    <div class="container">
+      <p>Demonstration of 3-Layer Architecture: Data Layer (Input/LocalStorage) &bull; Processing Layer (Financial Formulas) &bull; UI Layer (DOM Rendering)</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
