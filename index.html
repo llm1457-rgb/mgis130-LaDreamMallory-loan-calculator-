@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Smart Loan & Mortgage Calculator | MGIS130</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
 </head>
 <body>
   <header class="app-header">
@@ -60,33 +61,36 @@
       <div id="error-message" class="error-banner hidden"></div>
     </section>
 
-    <!-- UI Layer: Dynamic Payment Results -->
+    <!-- UI Layer: 4-Box Financial Summary Grid -->
     <section class="card results-card">
       <h2>2. Financial Summary</h2>
       <div class="metrics-grid">
+        <!-- Box 1: Periodic Payment -->
         <div class="metric-box highlight">
           <span class="metric-label" id="payment-frequency-label">Monthly Payment</span>
           <span class="metric-value" id="periodic-payment">$0.00</span>
         </div>
+
+        <!-- Box 2: Financed Principal -->
         <div class="metric-box">
           <span class="metric-label">Financed Principal</span>
           <span class="metric-value" id="net-principal">$0.00</span>
         </div>
+
+        <!-- Box 3: Total Interest & Out-of-Pocket Cost -->
         <div class="metric-box">
           <span class="metric-label">Total Interest Paid</span>
           <span class="metric-value" id="total-interest">$0.00</span>
+          <span class="metric-sublabel">Total Out-of-Pocket: <strong id="total-cost">$0.00</strong></span>
         </div>
-        <div class="metric-box">
-          <span class="metric-label">Total Out-of-Pocket Cost</span>
-          <span class="metric-value" id="total-cost">$0.00</span>
-        </div>
-      </div>
 
-      <div class="breakdown-container">
-        <h3>Visual Cost Breakdown</h3>
-        <div class="progress-bar-wrapper">
-          <div id="principal-bar" class="bar-segment principal-color" style="width: 50%;">Principal</div>
-          <div id="interest-bar" class="bar-segment interest-color" style="width: 50%;">Interest</div>
+        <!-- Box 4: Visual Cost Breakdown -->
+        <div class="metric-box">
+          <span class="metric-label">Cost Breakdown</span>
+          <div class="progress-bar-wrapper">
+            <div id="principal-bar" class="bar-segment principal-color" style="width: 50%;">Principal</div>
+            <div id="interest-bar" class="bar-segment interest-color" style="width: 50%;">Interest</div>
+          </div>
         </div>
       </div>
     </section>
