@@ -1,130 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart Loan & Mortgage Calculator | MGIS130</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Loan Repayment & Payoff Optimizer</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="app-header">
-    <div class="container">
-      <span class="header-tag">MGIS130 Information Systems Architecture</span>
-      <h1>Smart Loan Calculator</h1>
-      <p class="subtitle">Interactive Financial Modeling & Amortization Analysis</p>
-    </div>
+  <header>
+    <h1>Student Loan Payoff Optimizer</h1>
+    <p class="subtitle">Transform your D2 loan calculator into an portfolio strategy desk.</p>
   </header>
 
-  <main class="container main-content">
-    <!-- UI Layer: Inputs -->
-    <section class="card input-card">
-      <h2>1. Loan Parameters</h2>
-      <form id="loan-form">
-        <div class="form-group">
-          <label for="loan-amount">Vehicle / Home Price ($)</label>
-          <input type="number" id="loan-amount" min="1000" step="500" value="30000" required />
-        </div>
+  <main class="container">
+    <!-- Input Section -->
+    <section class="card input-section">
+      <h2>1. Your Loan Portfolio</h2>
+      <div id="loans-container">
+        <!-- Dynamic Loan Rows Will Be Rendered Here -->
+      </div>
+      
+      <div class="button-group">
+        <button type="button" id="add-loan-btn" class="btn secondary">+ Add Another Loan</button>
+        <button type="button" id="seed-data-btn" class="btn text-link">Load Sample Student Loans</button>
+      </div>
 
-        <div class="form-group">
-          <label for="down-payment">Down Payment ($)</label>
-          <input type="number" id="down-payment" min="0" step="500" value="5000" required />
-        </div>
+      <hr>
 
-        <div class="form-group">
-          <label for="interest-rate">Annual Interest Rate (%)</label>
-          <input type="number" id="interest-rate" min="0.1" max="30" step="0.1" value="5.5" required />
-        </div>
+      <h2>2. Extra Monthly Budget</h2>
+      <div class="form-group inline">
+        <label for="extra-budget">Additional Monthly Payoff Budget ($):</label>
+        <input type="number" id="extra-budget" value="150" min="0" step="10">
+      </div>
 
-        <div class="form-group">
-          <label for="loan-term">Loan Term (Years)</label>
-          <select id="loan-term" required>
-            <option value="3">3 Years</option>
-            <option value="5" selected>5 Years</option>
-            <option value="15">15 Years</option>
-            <option value="30">30 Years</option>
-          </select>
-        </div>
+      <h2>3. Payoff Strategy</h2>
+      <div class="strategy-selector">
+        <label class="radio-card">
+          <input type="radio" name="strategy" value="avalanche" checked>
+          <div class="radio-content">
+            <strong>Avalanche Method</strong>
+            <span>Target highest interest rate first. Saves the most money overall.</span>
+          </div>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="strategy" value="snowball">
+          <div class="radio-content">
+            <strong>Snowball Method</strong>
+            <span>Target lowest balance first. Delivers fast psychological wins.</span>
+          </div>
+        </label>
+      </div>
 
-        <div class="form-group">
-          <label for="payment-frequency">Payment Frequency</label>
-          <select id="payment-frequency" required>
-            <option value="12" selected>Monthly (12x / year)</option>
-            <option value="26">Bi-Weekly (26x / year)</option>
-            <option value="52">Weekly (52x / year)</option>
-          </select>
-        </div>
-
-        <button type="submit" id="calc-btn" class="btn-primary">Calculate Loan</button>
-        <button type="button" id="reset-btn" class="btn-secondary">Reset Defaults</button>
-      </form>
-      <div id="error-message" class="error-banner hidden"></div>
+      <button type="button" id="calculate-btn" class="btn primary full-width">Calculate Payoff Schedule</button>
     </section>
 
-    <!-- UI Layer: 4-Box Financial Summary Grid -->
-    <section class="card results-card">
-      <h2>2. Financial Summary</h2>
+    <!-- Output Metrics & Comparison -->
+    <section class="card output-section" id="results-section" style="display: none;">
+      <h2>Payoff Summary & Insights</h2>
+      
       <div class="metrics-grid">
-        <!-- Box 1: Periodic Payment -->
-        <div class="metric-box highlight">
-          <span class="metric-label" id="payment-frequency-label">Monthly Payment</span>
-          <span class="metric-value" id="periodic-payment">$0.00</span>
+        <div class="metric-card">
+          <span class="metric-label">Total Principal Debt</span>
+          <span class="metric-value" id="metric-total-balance">$0</span>
         </div>
-
-        <!-- Box 2: Financed Principal -->
-        <div class="metric-box">
-          <span class="metric-label">Financed Principal</span>
-          <span class="metric-value" id="net-principal">$0.00</span>
+        <div class="metric-card">
+          <span class="metric-label">Required Min. Monthly</span>
+          <span class="metric-value" id="metric-min-payment">$0</span>
         </div>
-
-        <!-- Box 3: Total Interest & Out-of-Pocket Cost -->
-        <div class="metric-box">
+        <div class="metric-card highlight">
+          <span class="metric-label">Estimated Time to Debt-Free</span>
+          <span class="metric-value" id="metric-payoff-time">0 mos</span>
+        </div>
+        <div class="metric-card highlight">
           <span class="metric-label">Total Interest Paid</span>
-          <span class="metric-value" id="total-interest">$0.00</span>
-          <span class="metric-sublabel">Total Out-of-Pocket: <strong id="total-cost">$0.00</strong></span>
+          <span class="metric-value" id="metric-total-interest">$0</span>
         </div>
+      </div>
 
-        <!-- Box 4: Visual Cost Breakdown -->
-        <div class="metric-box">
-          <span class="metric-label">Cost Breakdown</span>
-          <div class="progress-bar-wrapper">
-            <div id="principal-bar" class="bar-segment principal-color" style="width: 50%;">Principal</div>
-            <div id="interest-bar" class="bar-segment interest-color" style="width: 50%;">Interest</div>
-          </div>
-        </div>
+      <div class="comparison-banner" id="comparison-banner">
+        <!-- Strategy comparison savings text inserted via JS -->
+      </div>
+
+      <div class="table-header">
+        <h3>Amortization Schedule Overview</h3>
+        <button type="button" id="export-csv-btn" class="btn secondary sm">Export Schedule to CSV</button>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="schedule-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Total Payment</th>
+              <th>Principal Paid</th>
+              <th>Interest Paid</th>
+              <th>Remaining Debt</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Schedule rows populated via JS -->
+          </tbody>
+        </table>
       </div>
     </section>
   </main>
-
-  <!-- UI Layer: Dynamic Schedule Table -->
-  <section class="container amortization-section">
-    <div class="card">
-      <div class="accordion-header">
-        <h2>Amortization Schedule (First Year)</h2>
-        <button id="toggle-table-btn" class="btn-small">Show Schedule</button>
-      </div>
-      <div id="table-wrapper" class="hidden">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Period</th>
-              <th>Payment</th>
-              <th>Principal</th>
-              <th>Interest</th>
-              <th>Remaining Balance</th>
-            </tr>
-          </thead>
-          <tbody id="schedule-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <footer class="app-footer">
-    <div class="container">
-      <p>MGIS130 Three-Layer Architecture: Data Layer (LocalStorage & Forms) &bull; Processing Layer (PMT Logic) &bull; UI Layer (DOM)</p>
-    </div>
-  </footer>
 
   <script src="app.js"></script>
 </body>
