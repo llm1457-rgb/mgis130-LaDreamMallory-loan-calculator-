@@ -9,30 +9,44 @@
 <body>
   <header>
     <h1>Student Loan Payoff Strategy</h1>
+    <p class="subtitle">Design your payoff strategy step-by-step.</p>
   </header>
 
   <main class="container">
-    <!-- Input Section -->
-    <section class="card input-section">
-      <h2>1. Your Loan Portfolio</h2>
+    <!-- Step 1 Card -->
+    <section class="card step-card">
+      <div class="step-badge">Step 1</div>
+      <h2>Your Loan Portfolio</h2>
+      <p class="step-description">Enter your current active loans below, or load pre-populated sample student data.</p>
+      
       <div id="loans-container">
-        <!-- Dynamic Loan Rows Will Be Rendered Here -->
+        <!-- Dynamic Loan Rows Rendered via app.js -->
       </div>
       
       <div class="button-group">
         <button type="button" id="add-loan-btn" class="btn secondary">+ Add Another Loan</button>
         <button type="button" id="seed-data-btn" class="btn text-link">Load Sample Student Loans</button>
       </div>
+    </section>
 
-      <hr>
-
-      <h2>2. Extra Monthly Budget</h2>
+    <!-- Step 2 Card -->
+    <section class="card step-card">
+      <div class="step-badge">Step 2</div>
+      <h2>Extra Monthly Budget</h2>
+      <p class="step-description">Specify any additional amount you can allocate each month above your minimum payments.</p>
+      
       <div class="form-group inline">
-        <label for="extra-budget">Additional Monthly Payoff Budget ($):</label>
+        <label for="extra-budget">Additional Monthly Budget ($):</label>
         <input type="number" id="extra-budget" value="150" min="0" step="10">
       </div>
+    </section>
 
-      <h2>3. Payoff Strategy</h2>
+    <!-- Step 3 Card -->
+    <section class="card step-card">
+      <div class="step-badge">Step 3</div>
+      <h2>Select Payoff Strategy</h2>
+      <p class="step-description">Choose how extra payments are targeted across your debt balance.</p>
+      
       <div class="strategy-selector">
         <label class="radio-card">
           <input type="radio" name="strategy" value="avalanche" checked>
@@ -45,15 +59,15 @@
           <input type="radio" name="strategy" value="snowball">
           <div class="radio-content">
             <strong>Snowball Method</strong>
-            <span>Target lowest balance first. Delivers fast psychological wins.</span>
+            <span>Target lowest balance first. Provides fast psychological wins.</span>
           </div>
         </label>
       </div>
 
-      <button type="button" id="calculate-btn" class="btn primary full-width">Calculate Payoff Schedule</button>
+      <button type="button" id="calculate-btn" class="btn primary full-width lg">Calculate Payoff Schedule</button>
     </section>
 
-    <!-- Output Metrics & Comparison -->
+    <!-- Results Card -->
     <section class="card output-section" id="results-section" style="display: none;">
       <h2>Payoff Summary & Insights</h2>
       
@@ -77,7 +91,7 @@
       </div>
 
       <div class="comparison-banner" id="comparison-banner">
-        <!-- Strategy comparison savings text inserted via JS -->
+        <!-- Dynamic strategy comparison string inserted via app.js -->
       </div>
 
       <div class="table-header">
@@ -97,7 +111,7 @@
             </tr>
           </thead>
           <tbody>
-            <!-- Schedule rows populated via JS -->
+            <!-- Dynamic schedule rows inserted via app.js -->
           </tbody>
         </table>
       </div>
