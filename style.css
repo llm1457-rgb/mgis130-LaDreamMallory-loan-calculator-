@@ -143,11 +143,6 @@ input:focus {
   outline: 2px solid var(--primary-color);
 }
 
-input.input-invalid {
-  border-color: #dc2626;
-  background-color: #fef2f2;
-}
-
 .form-group.inline {
   display: flex;
   align-items: center;
@@ -314,6 +309,32 @@ input.input-invalid {
   font-size: 0.95rem;
 }
 
+/* Visual Burn-Down Chart */
+.chart-section {
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.chart-section h3 {
+  font-size: 1.05rem;
+  margin-bottom: 0.2rem;
+}
+
+.chart-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
 /* Table */
 .table-header {
   display: flex;
@@ -361,5 +382,8 @@ th {
   }
   .strategy-selector {
     grid-template-columns: 1fr;
+  }
+  .chart-container {
+    height: 240px;
   }
 }
