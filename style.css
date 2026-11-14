@@ -10,6 +10,9 @@
   --border-color: #cbd5e1;
   --success-bg: #dcfce7;
   --success-text: #15803d;
+  --error-bg: #fee2e2;
+  --error-text: #b91c1c;
+  --error-border: #fca5a5;
   --radius: 12px;
 }
 
@@ -92,13 +95,39 @@ h2 {
   margin-bottom: 1.5rem;
 }
 
-/* Loan Row Inputs */
+/* Column Headers & Loan Row Inputs */
+.loan-headers {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1.5fr 40px;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  padding: 0 0.15rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .loan-row {
   display: grid;
   grid-template-columns: 2fr 1.5fr 1fr 1.5fr 40px;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
   align-items: center;
+}
+
+.input-field-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-label {
+  display: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
 }
 
 input[type="text"],
@@ -112,6 +141,11 @@ input[type="number"] {
 
 input:focus {
   outline: 2px solid var(--primary-color);
+}
+
+input.input-invalid {
+  border-color: #dc2626;
+  background-color: #fef2f2;
 }
 
 .form-group.inline {
@@ -219,6 +253,24 @@ input:focus {
   color: var(--text-muted);
 }
 
+/* Validation Error Banner */
+.error-banner {
+  background: var(--error-bg);
+  color: var(--error-text);
+  border: 1px solid var(--error-border);
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+  line-height: 1.4;
+}
+
+.error-banner ul {
+  margin-left: 1.25rem;
+  margin-top: 0.35rem;
+}
+
 /* Output Metrics */
 .metrics-grid {
   display: grid;
@@ -296,8 +348,16 @@ th {
 }
 
 @media (max-width: 650px) {
+  .loan-headers {
+    display: none;
+  }
   .loan-row {
     grid-template-columns: 1fr 1fr;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .mobile-label {
+    display: block;
   }
   .strategy-selector {
     grid-template-columns: 1fr;
