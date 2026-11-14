@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Loan Payoff Strategy</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Chart.js Free CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <header>
@@ -104,6 +106,15 @@
 
       <div class="comparison-banner" id="comparison-banner">
         <!-- Dynamic strategy comparison string inserted via app.js -->
+      </div>
+
+      <!-- Visual Burn-Down Chart -->
+      <div class="chart-section">
+        <h3>Balance Burn-Down Comparison</h3>
+        <p class="chart-subtitle">Your selected strategy vs. paying minimums only ($0 extra budget)</p>
+        <div class="chart-container">
+          <canvas id="burndown-chart"></canvas>
+        </div>
       </div>
 
       <div class="table-header">
