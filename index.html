@@ -19,6 +19,15 @@
       <h2>Your Loan Portfolio</h2>
       <p class="step-description">Enter your current active loans below, or load pre-populated sample student data.</p>
       
+      <!-- Column Headers -->
+      <div class="loan-headers" aria-hidden="true">
+        <span>Loan Name</span>
+        <span>Balance ($)</span>
+        <span>Interest Rate (%)</span>
+        <span>Min. Payment ($)</span>
+        <span></span>
+      </div>
+
       <div id="loans-container">
         <!-- Dynamic Loan Rows Rendered via app.js -->
       </div>
@@ -63,6 +72,9 @@
           </div>
         </label>
       </div>
+
+      <!-- Validation Error Banner -->
+      <div id="validation-error" class="error-banner" style="display: none;" role="alert"></div>
 
       <button type="button" id="calculate-btn" class="btn primary full-width lg">Calculate Payoff Schedule</button>
     </section>
