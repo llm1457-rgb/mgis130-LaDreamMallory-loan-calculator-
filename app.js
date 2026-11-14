@@ -12,7 +12,7 @@ const addLoanBtn = document.getElementById("add-loan-btn");
 const seedDataBtn = document.getElementById("seed-data-btn");
 const calculateBtn = document.getElementById("calculate-btn");
 const resultsSection = document.getElementById("results-section");
-const exportCsvBtn = document.getElementById("export-csv-btn");
+const validationErrorBanner = document.getElementById("validation-error");
 
 // Initialize App
 document.addEventListener("DOMContentLoaded", () => {
@@ -21,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
   addLoanBtn.addEventListener("click", addLoanRow);
   seedDataBtn.addEventListener("click", loadSampleData);
   calculateBtn.addEventListener("click", runPayoffCalculation);
-  exportCsvBtn.addEventListener("click", exportScheduleToCSV);
 });
 
 // Render dynamic input rows based on loans state
@@ -32,11 +31,23 @@ function renderLoanInputs() {
     const row = document.createElement("div");
     row.className = "loan-row";
     row.innerHTML = `
-      <input type="text" placeholder="Loan Name" value="${loan.name}" onchange="updateLoan(${index}, 'name', this.value)">
-      <input type="number" placeholder="Balance ($)" value="${loan.balance}" onchange="updateLoan(${index}, 'balance', parseFloat(this.value) || 0)">
-      <input type="number" step="0.01" placeholder="Rate (%)" value="${loan.rate}" onchange="updateLoan(${index}, 'rate', parseFloat(this.value) || 0)">
-      <input type="number" placeholder="Min Pay ($)" value="${loan.minPayment}" onchange="updateLoan(${index}, 'minPayment', parseFloat(this.value) || 0)">
-      <button type="button" class="btn icon-delete" onclick="removeLoanRow(${index})" title="Delete Loan">✕</button>
+      <div class="input-field-group">
+        <span class="mobile-label">Loan Name</span>
+        <input type="text" aria-label="Loan Name" placeholder="e.g. Federal Direct" value="${loan.name}" onchange="updateLoan(${index}, 'name', this.value)">
+      </div>
+      <div class="input-field-group">
+        <span class="mobile-label">Balance ($)</span>
+        <input type="number" aria-label="Balance ($)" min="0" step="100" placeholder="5000" value="${loan.balance}" onchange="updateLoan(${index}, 'balance', parseFloat(this.value))">
+      </div>
+      <div class="input-field-group">
+        <span class="mobile-label">Interest Rate (%)</span>
+        <input type="number" aria-label="Interest Rate (%)" min="0" max="100" step="0.01" placeholder="5.50" value="${loan.rate}" onchange="updateLoan(${index}, 'rate', parseFloat(this.value))">
+      </div>
+      <div class="input-field-group">
+        <span class="mobile-label">Min. Payment ($)</span>
+        <input type="number" aria-label="Minimum Monthly Payment ($)" min="0" step="5" placeholder="60" value="${loan.minPayment}" onchange="updateLoan(${index}, 'minPayment', parseFloat(this.value))">
+      </div>
+      <button type="button" class="btn icon-delete" onclick="removeLoanRow(${index})" title="Delete Loan" aria-label="Delete ${loan.name}">✕</button>
     `;
     loansContainer.appendChild(row);
   });
@@ -44,20 +55,23 @@ function renderLoanInputs() {
 
 function updateLoan(index, field, value) {
   loans[index][field] = value;
+  clearValidationError();
 }
 
 function addLoanRow() {
   const newId = loans.length > 0 ? Math.max(...loans.map(l => l.id)) + 1 : 1;
   loans.push({ id: newId, name: `Loan ${newId}`, balance: 4000, rate: 5.0, minPayment: 45 });
+  clearValidationError();
   renderLoanInputs();
 }
 
 function removeLoanRow(index) {
   if (loans.length === 1) {
-    alert("You must keep at least one loan in your portfolio.");
+    showValidationError(["You must keep at least one loan in your portfolio."]);
     return;
   }
   loans.splice(index, 1);
+  clearValidationError();
   renderLoanInputs();
 }
 
@@ -67,12 +81,68 @@ function loadSampleData() {
     { id: 2, name: "Federal Direct Unsubsidized", balance: 7500, rate: 6.54, minPayment: 85 },
     { id: 3, name: "Private Student Loan", balance: 12000, rate: 8.25, minPayment: 155 }
   ];
+  clearValidationError();
   renderLoanInputs();
+}
+
+// Input Validation Helper
+function validateInputs(extraBudget) {
+  const errors = [];
+
+  if (isNaN(extraBudget) || extraBudget < 0) {
+    errors.push("Additional monthly budget must be $0 or greater.");
+  }
+
+  loans.forEach((loan, index) => {
+    const label = loan.name && loan.name.trim() !== "" ? `"${loan.name.trim()}"` : `Loan #${index + 1}`;
+
+    if (isNaN(loan.balance) || loan.balance <= 0) {
+      errors.push(`${label}: Balance must be greater than $0.`);
+    }
+    if (isNaN(loan.rate) || loan.rate < 0 || loan.rate > 100) {
+      errors.push(`${label}: Interest rate must be between 0% and 100%.`);
+    }
+    if (isNaN(loan.minPayment) || loan.minPayment <= 0) {
+      errors.push(`${label}: Minimum monthly payment must be greater than $0.`);
+    } else if (!isNaN(loan.balance) && !isNaN(loan.rate) && loan.balance > 0) {
+      // Check if minimum payment covers at least the first month's interest
+      const firstMonthInterest = loan.balance * ((loan.rate / 100) / 12);
+      if (loan.minPayment <= firstMonthInterest) {
+        errors.push(`${label}: Minimum payment ($${loan.minPayment.toFixed(2)}) must exceed first-month interest ($${firstMonthInterest.toFixed(2)}) so the balance can decrease.`);
+      }
+    }
+  });
+
+  return errors;
+}
+
+function showValidationError(errors) {
+  validationErrorBanner.innerHTML = `
+    <strong>Please fix the following before calculating:</strong>
+    <ul>${errors.map(err => `<li>${err}</li>`).join("")}</ul>
+  `;
+  validationErrorBanner.style.display = "block";
+  resultsSection.style.display = "none";
+}
+
+function clearValidationError() {
+  validationErrorBanner.style.display = "none";
+  validationErrorBanner.innerHTML = "";
 }
 
 // Core Calculation Engine
 function runPayoffCalculation() {
-  const extraBudget = parseFloat(document.getElementById("extra-budget").value) || 0;
+  const extraBudgetInput = document.getElementById("extra-budget").value;
+  const extraBudget = extraBudgetInput === "" ? 0 : parseFloat(extraBudgetInput);
+
+  // Run validation checks first
+  const errors = validateInputs(extraBudget);
+  if (errors.length > 0) {
+    showValidationError(errors);
+    return;
+  }
+
+  clearValidationError();
   const strategy = document.querySelector('input[name="strategy"]:checked').value;
 
   // Run calculation for chosen strategy
@@ -94,10 +164,10 @@ function runPayoffCalculation() {
   const interestSaved = altRun.totalInterestPaid - currentRun.totalInterestPaid;
   const banner = document.getElementById("comparison-banner");
 
-  if (strategy === "avalanche" && interestSaved > 0) {
-    banner.innerText = `👍 Avalanche strategy saves you $${interestSaved.toFixed(2)} in interest compared to Snowball!`;
-  } else if (strategy === "snowball" && interestSaved < 0) {
-    banner.innerText = `ℹ️ Snowball strategy costs $${Math.abs(interestSaved).toFixed(2)} more in interest than Avalanche, but pays off small loans fastest.`;
+  if (strategy === "avalanche" && interestSaved > 0.01) {
+    banner.innerText = `Avalanche strategy saves you $${interestSaved.toFixed(2)} in interest compared to Snowball!`;
+  } else if (strategy === "snowball" && interestSaved < -0.01) {
+    banner.innerText = `Snowball strategy costs $${Math.abs(interestSaved).toFixed(2)} more in interest than Avalanche, but pays off small loans fastest.`;
   } else {
     banner.innerText = `Both strategies yield equivalent results for this portfolio setup.`;
   }
@@ -108,7 +178,6 @@ function runPayoffCalculation() {
 
 // Payoff Simulation Function
 function simulatePayoff(inputLoans, extraPayment, strategy) {
-  // Deep copy loans
   let activeLoans = JSON.parse(JSON.stringify(inputLoans));
   
   let month = 0;
@@ -119,7 +188,7 @@ function simulatePayoff(inputLoans, extraPayment, strategy) {
   const totalMinPayment = activeLoans.reduce((sum, l) => sum + l.minPayment, 0);
 
   // Simulation Loop
-  while (activeLoans.some(l => l.balance > 0) && month < 600) { // Max 50 yrs safety cap
+  while (activeLoans.some(l => l.balance > 0) && month < 600) {
     month++;
     let monthlyTotalPaid = 0;
     let monthlyInterestPaid = 0;
@@ -142,9 +211,9 @@ function simulatePayoff(inputLoans, extraPayment, strategy) {
     // 2. Sort remaining active loans based on selected strategy
     let targetLoans = activeLoans.filter(l => l.balance > 0);
     if (strategy === "avalanche") {
-      targetLoans.sort((a, b) => b.rate - a.rate); // Highest interest rate first
+      targetLoans.sort((a, b) => b.rate - a.rate);
     } else {
-      targetLoans.sort((a, b) => a.balance - b.balance); // Lowest balance first
+      targetLoans.sort((a, b) => a.balance - b.balance);
     }
 
     // 3. Apply Extra Budget to Target Loan
@@ -196,23 +265,4 @@ function renderScheduleTable(schedule) {
     `;
     tbody.appendChild(tr);
   });
-}
-
-// Export CSV Function
-function exportScheduleToCSV() {
-  if (!generatedSchedule || generatedSchedule.length === 0) return;
-
-  let csvContent = "data:text/csv;charset=utf-8,Month,Total Paid,Principal Paid,Interest Paid,Remaining Balance\n";
-  
-  generatedSchedule.forEach(r => {
-    csvContent += `${r.month},${r.totalPaid.toFixed(2)},${r.principalPaid.toFixed(2)},${r.interestPaid.toFixed(2)},${r.remainingBalance.toFixed(2)}\n`;
-  });
-
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "student_loan_amortization_schedule.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 }
