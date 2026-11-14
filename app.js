@@ -5,6 +5,7 @@ let loans = [
 ];
 
 let generatedSchedule = [];
+let burndownChartInstance = null;
 
 // DOM Elements
 const loansContainer = document.getElementById("loans-container");
@@ -105,7 +106,6 @@ function validateInputs(extraBudget) {
     if (isNaN(loan.minPayment) || loan.minPayment <= 0) {
       errors.push(`${label}: Minimum monthly payment must be greater than $0.`);
     } else if (!isNaN(loan.balance) && !isNaN(loan.rate) && loan.balance > 0) {
-      // Check if minimum payment covers at least the first month's interest
       const firstMonthInterest = loan.balance * ((loan.rate / 100) / 12);
       if (loan.minPayment <= firstMonthInterest) {
         errors.push(`${label}: Minimum payment ($${loan.minPayment.toFixed(2)}) must exceed first-month interest ($${firstMonthInterest.toFixed(2)}) so the balance can decrease.`);
@@ -135,7 +135,6 @@ function runPayoffCalculation() {
   const extraBudgetInput = document.getElementById("extra-budget").value;
   const extraBudget = extraBudgetInput === "" ? 0 : parseFloat(extraBudgetInput);
 
-  // Run validation checks first
   const errors = validateInputs(extraBudget);
   if (errors.length > 0) {
     showValidationError(errors);
@@ -148,9 +147,12 @@ function runPayoffCalculation() {
   // Run calculation for chosen strategy
   const currentRun = simulatePayoff(loans, extraBudget, strategy);
   
-  // Run calculation for alternate strategy to calculate exact savings difference
+  // Run calculation for alternate strategy (Avalanche vs Snowball)
   const altStrategy = strategy === "avalanche" ? "snowball" : "avalanche";
   const altRun = simulatePayoff(loans, extraBudget, altStrategy);
+
+  // Run baseline calculation ($0 extra budget) for the visual chart comparison
+  const baselineRun = simulatePayoff(loans, 0, strategy);
 
   generatedSchedule = currentRun.schedule;
 
@@ -172,6 +174,7 @@ function runPayoffCalculation() {
     banner.innerText = `Both strategies yield equivalent results for this portfolio setup.`;
   }
 
+  renderBurndownChart(currentRun, baselineRun, strategy, extraBudget);
   renderScheduleTable(currentRun.schedule);
   resultsSection.style.display = "block";
 }
@@ -187,7 +190,6 @@ function simulatePayoff(inputLoans, extraPayment, strategy) {
   const initialBalance = activeLoans.reduce((sum, l) => sum + l.balance, 0);
   const totalMinPayment = activeLoans.reduce((sum, l) => sum + l.minPayment, 0);
 
-  // Simulation Loop
   while (activeLoans.some(l => l.balance > 0) && month < 600) {
     month++;
     let monthlyTotalPaid = 0;
@@ -247,6 +249,111 @@ function simulatePayoff(inputLoans, extraPayment, strategy) {
     totalInterestPaid,
     schedule
   };
+}
+
+// Render Visual Balance Burn-Down Chart
+function renderBurndownChart(currentRun, baselineRun, strategy, extraBudget) {
+  const ctx = document.getElementById("burndown-chart").getContext("2d");
+
+  if (burndownChartInstance) {
+    burndownChartInstance.destroy();
+  }
+
+  const maxMonths = Math.max(currentRun.totalMonths, baselineRun.totalMonths);
+  const labels = ["Start"];
+  const strategyData = [currentRun.initialBalance];
+  const baselineData = [baselineRun.initialBalance];
+
+  for (let m = 1; m <= maxMonths; m++) {
+    labels.push(`Mo ${m}`);
+
+    const currentEntry = currentRun.schedule[m - 1];
+    strategyData.push(currentEntry ? Number(currentEntry.remainingBalance.toFixed(2)) : 0);
+
+    const baseEntry = baselineRun.schedule[m - 1];
+    baselineData.push(baseEntry ? Number(baseEntry.remainingBalance.toFixed(2)) : 0);
+  }
+
+  const strategyLabel = strategy === "avalanche" ? "Avalanche Plan" : "Snowball Plan";
+
+  const datasets = [
+    {
+      label: `${strategyLabel} (+$${extraBudget}/mo)`,
+      data: strategyData,
+      borderColor: "#2563eb",
+      backgroundColor: "rgba(37, 99, 235, 0.12)",
+      borderWidth: 3,
+      fill: true,
+      tension: 0.25,
+      pointRadius: maxMonths > 60 ? 0 : 2,
+      pointHoverRadius: 5
+    }
+  ];
+
+  // Show baseline dashed line when user adds extra monthly budget
+  if (extraBudget > 0) {
+    datasets.push({
+      label: "Minimum Payments Only ($0 extra)",
+      data: baselineData,
+      borderColor: "#94a3b8",
+      backgroundColor: "transparent",
+      borderWidth: 2,
+      borderDash: [6, 6],
+      fill: false,
+      tension: 0.25,
+      pointRadius: 0,
+      pointHoverRadius: 4
+    });
+  }
+
+  burndownChartInstance = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: "index",
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          position: "top",
+          labels: {
+            usePointStyle: true,
+            padding: 16
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const val = context.parsed.y || 0;
+              return `${context.dataset.label}: $${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            maxTicksLimit: 10
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return "$" + value.toLocaleString();
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 // Render Table
