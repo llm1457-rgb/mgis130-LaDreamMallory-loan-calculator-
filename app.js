@@ -2,7 +2,7 @@
 let loans = [
   { id: 1, name: "Subsidized Direct Loan", balance: 5500, rate: 4.99, minPayment: 60 },
   { id: 2, name: "Unsubsidized Direct Loan", balance: 7500, rate: 6.54, minPayment: 85 }
-];
+]; 
 
 let generatedSchedule = [];
 let burndownChartInstance = null;
