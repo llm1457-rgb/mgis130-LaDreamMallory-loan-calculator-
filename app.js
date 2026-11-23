@@ -16,6 +16,17 @@ const calculateBtn = document.getElementById("calculate-btn");
 const resultsSection = document.getElementById("results-section");
 const emptyStateSection = document.getElementById("empty-state");
 const validationErrorBanner = document.getElementById("validation-error");
+const extraBudgetInput = document.getElementById("extra-budget");
+const extraBudgetSlider = document.getElementById("extra-budget-slider");
+const presetChips = document.querySelectorAll(".chip-btn");
+
+// Helper: Convert Month Offset (1, 2, 3...) into Calendar Month & Year (e.g., "May 2030")
+function formatFutureDate(monthOffset) {
+  const date = new Date();
+  date.setDate(1);
+  date.setMonth(date.getMonth() + monthOffset);
+  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
 
 // Initialize App
 document.addEventListener("DOMContentLoaded", () => {
@@ -25,6 +36,33 @@ document.addEventListener("DOMContentLoaded", () => {
   seedDataBtn.addEventListener("click", loadSampleData);
   calculateBtn.addEventListener("click", runPayoffCalculation);
 
+  // Sync Number Input -> Slider & Chips
+  extraBudgetInput.addEventListener("input", () => {
+    const val = parseFloat(extraBudgetInput.value) || 0;
+    extraBudgetSlider.value = Math.min(1000, Math.max(0, val));
+    updateActiveChip(val);
+    if (hasCalculated) runPayoffCalculation();
+  });
+
+  // Sync Slider -> Number Input & Chips
+  extraBudgetSlider.addEventListener("input", () => {
+    const val = parseFloat(extraBudgetSlider.value) || 0;
+    extraBudgetInput.value = val;
+    updateActiveChip(val);
+    if (hasCalculated) runPayoffCalculation();
+  });
+
+  // Preset Chip Buttons
+  presetChips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      const amount = parseFloat(chip.dataset.amount);
+      extraBudgetInput.value = amount;
+      extraBudgetSlider.value = amount;
+      updateActiveChip(amount);
+      if (hasCalculated) runPayoffCalculation();
+    });
+  });
+
   // Auto-update results if user switches Avalanche <-> Snowball after calculating
   document.querySelectorAll('input[name="strategy"]').forEach(radio => {
     radio.addEventListener("change", () => {
@@ -32,6 +70,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
+function updateActiveChip(amount) {
+  presetChips.forEach(chip => {
+    chip.classList.toggle("active", parseFloat(chip.dataset.amount) === amount);
+  });
+}
 
 // Render compact loan cards for the left sidebar
 function renderLoanInputs() {
@@ -144,8 +188,8 @@ function clearValidationError() {
 
 // Core Calculation Engine
 function runPayoffCalculation() {
-  const extraBudgetInput = document.getElementById("extra-budget").value;
-  const extraBudget = extraBudgetInput === "" ? 0 : parseFloat(extraBudgetInput);
+  const rawVal = extraBudgetInput.value;
+  const extraBudget = rawVal === "" ? 0 : parseFloat(rawVal);
 
   const errors = validateInputs(extraBudget);
   if (errors.length > 0) {
@@ -167,7 +211,8 @@ function runPayoffCalculation() {
   // Update UI Metrics
   document.getElementById("metric-total-balance").innerText = `$${currentRun.initialBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
   document.getElementById("metric-min-payment").innerText = `$${currentRun.totalMinPayment.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
-  document.getElementById("metric-payoff-time").innerText = `${currentRun.totalMonths} mos`;
+  document.getElementById("metric-payoff-time").innerText = formatFutureDate(currentRun.totalMonths);
+  document.getElementById("metric-payoff-date").innerText = `${currentRun.totalMonths} months total`;
   document.getElementById("metric-total-interest").innerText = `$${currentRun.totalInterestPaid.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
 
   // Strategy comparison message
@@ -206,6 +251,7 @@ function simulatePayoff(inputLoans, extraPayment, strategy) {
     let monthlyInterestPaid = 0;
     let monthlyPrincipalPaid = 0;
 
+    // 1. Accrue Interest & Pay Minimums
     activeLoans.forEach(loan => {
       if (loan.balance > 0) {
         let monthlyRate = (loan.rate / 100) / 12;
@@ -219,6 +265,7 @@ function simulatePayoff(inputLoans, extraPayment, strategy) {
       }
     });
 
+    // 2. Sort remaining active loans based on selected strategy
     let targetLoans = activeLoans.filter(l => l.balance > 0);
     if (strategy === "avalanche") {
       targetLoans.sort((a, b) => b.rate - a.rate);
@@ -226,6 +273,7 @@ function simulatePayoff(inputLoans, extraPayment, strategy) {
       targetLoans.sort((a, b) => a.balance - b.balance);
     }
 
+    // 3. Apply Extra Budget to Target Loan
     let remainingExtra = extraPayment;
     for (let loan of targetLoans) {
       if (remainingExtra <= 0) break;
@@ -242,6 +290,7 @@ function simulatePayoff(inputLoans, extraPayment, strategy) {
 
     schedule.push({
       month,
+      dateLabel: formatFutureDate(month),
       totalPaid: monthlyTotalPaid,
       principalPaid: monthlyPrincipalPaid,
       interestPaid: monthlyInterestPaid,
@@ -267,12 +316,12 @@ function renderBurndownChart(currentRun, baselineRun, strategy, extraBudget) {
   }
 
   const maxMonths = Math.max(currentRun.totalMonths, baselineRun.totalMonths);
-  const labels = ["Start"];
+  const labels = ["Now"];
   const strategyData = [currentRun.initialBalance];
   const baselineData = [baselineRun.initialBalance];
 
   for (let m = 1; m <= maxMonths; m++) {
-    labels.push(`Mo ${m}`);
+    labels.push(formatFutureDate(m));
 
     const currentEntry = currentRun.schedule[m - 1];
     strategyData.push(currentEntry ? Number(currentEntry.remainingBalance.toFixed(2)) : 0);
@@ -370,7 +419,7 @@ function renderScheduleTable(schedule) {
   schedule.forEach(row => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>Month ${row.month}</td>
+      <td>${row.dateLabel} <span style="color:#64748b;font-size:0.78rem;">(Mo ${row.month})</span></td>
       <td>$${row.totalPaid.toFixed(2)}</td>
       <td>$${row.principalPaid.toFixed(2)}</td>
       <td>$${row.interestPaid.toFixed(2)}</td>
