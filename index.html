@@ -11,133 +11,137 @@
 <body>
   <header>
     <h1>Student Loan Payoff Strategy</h1>
-    <p class="subtitle">Design your payoff strategy step-by-step.</p>
+    <p class="subtitle">Compare repayment strategies and visualize your path to debt-free.</p>
   </header>
 
-  <main class="container">
-    <!-- Step 1 Card -->
-    <section class="card step-card">
-      <div class="step-badge">Step 1</div>
-      <h2>Your Loan Portfolio</h2>
-      <p class="step-description">Enter your current active loans below, or load pre-populated sample student data.</p>
-      
-      <!-- Column Headers -->
-      <div class="loan-headers" aria-hidden="true">
-        <span>Loan Name</span>
-        <span>Balance ($)</span>
-        <span>Interest Rate (%)</span>
-        <span>Min. Payment ($)</span>
-        <span></span>
-      </div>
+  <main class="dashboard-layout">
+    <!-- LEFT COLUMN: Step-by-Step Controls -->
+    <div class="controls-column">
+      <!-- Step 1 Card -->
+      <section class="card step-card">
+        <div class="step-header">
+          <span class="step-badge">Step 1</span>
+          <button type="button" id="seed-data-btn" class="btn text-link sm">Load Sample Loans</button>
+        </div>
+        <h2>Your Loan Portfolio</h2>
+        <p class="step-description">Add your active student loans below.</p>
 
-      <div id="loans-container">
-        <!-- Dynamic Loan Rows Rendered via app.js -->
-      </div>
-      
-      <div class="button-group">
-        <button type="button" id="add-loan-btn" class="btn secondary">+ Add Another Loan</button>
-        <button type="button" id="seed-data-btn" class="btn text-link">Load Sample Student Loans</button>
-      </div>
-    </section>
+        <div id="loans-container">
+          <!-- Dynamic Loan Cards Rendered via app.js -->
+        </div>
+        
+        <button type="button" id="add-loan-btn" class="btn secondary full-width">+ Add Another Loan</button>
+      </section>
 
-    <!-- Step 2 Card -->
-    <section class="card step-card">
-      <div class="step-badge">Step 2</div>
-      <h2>Extra Monthly Budget</h2>
-      <p class="step-description">Specify any additional amount you can allocate each month above your minimum payments.</p>
-      
-      <div class="form-group inline">
-        <label for="extra-budget">Additional Monthly Budget ($):</label>
-        <input type="number" id="extra-budget" value="150" min="0" step="10">
-      </div>
-    </section>
+      <!-- Step 2 Card -->
+      <section class="card step-card">
+        <div class="step-badge">Step 2</div>
+        <h2>Extra Monthly Budget</h2>
+        <p class="step-description">Amount paid each month above required minimums.</p>
+        
+        <div class="form-group inline">
+          <label for="extra-budget">Extra Payment ($/mo):</label>
+          <input type="number" id="extra-budget" value="150" min="0" step="10">
+        </div>
+      </section>
 
-    <!-- Step 3 Card -->
-    <section class="card step-card">
-      <div class="step-badge">Step 3</div>
-      <h2>Select Payoff Strategy</h2>
-      <p class="step-description">Choose how extra payments are targeted across your debt balance.</p>
-      
-      <div class="strategy-selector">
-        <label class="radio-card">
-          <input type="radio" name="strategy" value="avalanche" checked>
-          <div class="radio-content">
-            <strong>Avalanche Method</strong>
-            <span>Target highest interest rate first. Saves the most money overall.</span>
+      <!-- Step 3 Card -->
+      <section class="card step-card">
+        <div class="step-badge">Step 3</div>
+        <h2>Payoff Strategy</h2>
+        <p class="step-description">Choose how extra payments are prioritized.</p>
+        
+        <div class="strategy-selector">
+          <label class="radio-card">
+            <input type="radio" name="strategy" value="avalanche" checked>
+            <div class="radio-content">
+              <strong>Avalanche Method</strong>
+              <span>Highest interest rate first (saves most money).</span>
+            </div>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="strategy" value="snowball">
+            <div class="radio-content">
+              <strong>Snowball Method</strong>
+              <span>Lowest balance first (fastest quick wins).</span>
+            </div>
+          </label>
+        </div>
+
+        <!-- Validation Error Banner -->
+        <div id="validation-error" class="error-banner" style="display: none;" role="alert"></div>
+
+        <button type="button" id="calculate-btn" class="btn primary full-width lg">Calculate Payoff Schedule</button>
+      </section>
+    </div>
+
+    <!-- RIGHT COLUMN: Sticky Live Results -->
+    <div class="results-column">
+      <!-- Empty State Placeholder (Before first calculation) -->
+      <section class="card empty-state" id="empty-state">
+        <div class="empty-icon">📊</div>
+        <h2>Ready to Simulate Your Payoff</h2>
+        <p>Review your loan portfolio on the left and click <strong>Calculate Payoff Schedule</strong> to generate your balance burn-down chart and timeline.</p>
+      </section>
+
+      <!-- Results Card -->
+      <section class="card output-section" id="results-section" style="display: none;">
+        <h2>Payoff Summary & Insights</h2>
+        
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Total Principal</span>
+            <span class="metric-value" id="metric-total-balance">$0</span>
           </div>
-        </label>
-        <label class="radio-card">
-          <input type="radio" name="strategy" value="snowball">
-          <div class="radio-content">
-            <strong>Snowball Method</strong>
-            <span>Target lowest balance first. Provides fast psychological wins.</span>
+          <div class="metric-card">
+            <span class="metric-label">Min. Monthly</span>
+            <span class="metric-value" id="metric-min-payment">$0</span>
           </div>
-        </label>
-      </div>
-
-      <!-- Validation Error Banner -->
-      <div id="validation-error" class="error-banner" style="display: none;" role="alert"></div>
-
-      <button type="button" id="calculate-btn" class="btn primary full-width lg">Calculate Payoff Schedule</button>
-    </section>
-
-    <!-- Results Card -->
-    <section class="card output-section" id="results-section" style="display: none;">
-      <h2>Payoff Summary & Insights</h2>
-      
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <span class="metric-label">Total Principal Debt</span>
-          <span class="metric-value" id="metric-total-balance">$0</span>
+          <div class="metric-card highlight">
+            <span class="metric-label">Debt-Free In</span>
+            <span class="metric-value" id="metric-payoff-time">0 mos</span>
+          </div>
+          <div class="metric-card highlight">
+            <span class="metric-label">Total Interest</span>
+            <span class="metric-value" id="metric-total-interest">$0</span>
+          </div>
         </div>
-        <div class="metric-card">
-          <span class="metric-label">Required Min. Monthly</span>
-          <span class="metric-value" id="metric-min-payment">$0</span>
-        </div>
-        <div class="metric-card highlight">
-          <span class="metric-label">Estimated Time to Debt-Free</span>
-          <span class="metric-value" id="metric-payoff-time">0 mos</span>
-        </div>
-        <div class="metric-card highlight">
-          <span class="metric-label">Total Interest Paid</span>
-          <span class="metric-value" id="metric-total-interest">$0</span>
-        </div>
-      </div>
 
-      <div class="comparison-banner" id="comparison-banner">
-        <!-- Dynamic strategy comparison string inserted via app.js -->
-      </div>
-
-      <!-- Visual Burn-Down Chart -->
-      <div class="chart-section">
-        <h3>Balance Burn-Down Comparison</h3>
-        <p class="chart-subtitle">Your selected strategy vs. paying minimums only ($0 extra budget)</p>
-        <div class="chart-container">
-          <canvas id="burndown-chart"></canvas>
+        <div class="comparison-banner" id="comparison-banner">
+          <!-- Dynamic strategy comparison string inserted via app.js -->
         </div>
-      </div>
 
-      <div class="table-header">
-        <h3>Amortization Schedule Overview</h3>
-      </div>
+        <!-- Visual Burn-Down Chart -->
+        <div class="chart-section">
+          <h3>Balance Burn-Down Comparison</h3>
+          <p class="chart-subtitle">Selected strategy vs. paying minimums only ($0 extra budget)</p>
+          <div class="chart-container">
+            <canvas id="burndown-chart"></canvas>
+          </div>
+        </div>
 
-      <div class="table-wrapper">
-        <table id="schedule-table">
-          <thead>
-            <tr>
-              <th>Month</th>
-              <th>Total Payment</th>
-              <th>Principal Paid</th>
-              <th>Interest Paid</th>
-              <th>Remaining Debt</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Dynamic schedule rows inserted via app.js -->
-          </tbody>
-        </table>
-      </div>
-    </section>
+        <div class="table-header">
+          <h3>Amortization Schedule</h3>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="schedule-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Total Paid</th>
+                <th>Principal</th>
+                <th>Interest</th>
+                <th>Remaining</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Dynamic schedule rows inserted via app.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
   </main>
 
   <script src="app.js"></script>
