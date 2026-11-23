@@ -2,10 +2,11 @@
 let loans = [
   { id: 1, name: "Subsidized Direct Loan", balance: 5500, rate: 4.99, minPayment: 60 },
   { id: 2, name: "Unsubsidized Direct Loan", balance: 7500, rate: 6.54, minPayment: 85 }
-]; 
+];
 
 let generatedSchedule = [];
 let burndownChartInstance = null;
+let hasCalculated = false;
 
 // DOM Elements
 const loansContainer = document.getElementById("loans-container");
@@ -13,6 +14,7 @@ const addLoanBtn = document.getElementById("add-loan-btn");
 const seedDataBtn = document.getElementById("seed-data-btn");
 const calculateBtn = document.getElementById("calculate-btn");
 const resultsSection = document.getElementById("results-section");
+const emptyStateSection = document.getElementById("empty-state");
 const validationErrorBanner = document.getElementById("validation-error");
 
 // Initialize App
@@ -22,41 +24,50 @@ document.addEventListener("DOMContentLoaded", () => {
   addLoanBtn.addEventListener("click", addLoanRow);
   seedDataBtn.addEventListener("click", loadSampleData);
   calculateBtn.addEventListener("click", runPayoffCalculation);
+
+  // Auto-update results if user switches Avalanche <-> Snowball after calculating
+  document.querySelectorAll('input[name="strategy"]').forEach(radio => {
+    radio.addEventListener("change", () => {
+      if (hasCalculated) runPayoffCalculation();
+    });
+  });
 });
 
-// Render dynamic input rows based on loans state
+// Render compact loan cards for the left sidebar
 function renderLoanInputs() {
   loansContainer.innerHTML = "";
   
   loans.forEach((loan, index) => {
-    const row = document.createElement("div");
-    row.className = "loan-row";
-    row.innerHTML = `
-      <div class="input-field-group">
-        <span class="mobile-label">Loan Name</span>
-        <input type="text" aria-label="Loan Name" placeholder="e.g. Federal Direct" value="${loan.name}" onchange="updateLoan(${index}, 'name', this.value)">
+    const card = document.createElement("div");
+    card.className = "loan-card-item";
+    card.innerHTML = `
+      <div class="loan-card-top">
+        <input type="text" aria-label="Loan Name" placeholder="Loan Name (e.g. Federal Direct)" value="${loan.name}" onchange="updateLoan(${index}, 'name', this.value)">
+        <button type="button" class="btn icon-delete" onclick="removeLoanRow(${index})" title="Delete Loan" aria-label="Delete ${loan.name}">✕</button>
       </div>
-      <div class="input-field-group">
-        <span class="mobile-label">Balance ($)</span>
-        <input type="number" aria-label="Balance ($)" min="0" step="100" placeholder="5000" value="${loan.balance}" onchange="updateLoan(${index}, 'balance', parseFloat(this.value))">
+      <div class="loan-card-numbers">
+        <div class="input-field-group">
+          <span class="field-label">Balance ($)</span>
+          <input type="number" aria-label="Balance ($)" min="0" step="100" value="${loan.balance}" onchange="updateLoan(${index}, 'balance', parseFloat(this.value))">
+        </div>
+        <div class="input-field-group">
+          <span class="field-label">Rate (%)</span>
+          <input type="number" aria-label="Interest Rate (%)" min="0" max="100" step="0.01" value="${loan.rate}" onchange="updateLoan(${index}, 'rate', parseFloat(this.value))">
+        </div>
+        <div class="input-field-group">
+          <span class="field-label">Min Pay ($)</span>
+          <input type="number" aria-label="Minimum Monthly Payment ($)" min="0" step="5" value="${loan.minPayment}" onchange="updateLoan(${index}, 'minPayment', parseFloat(this.value))">
+        </div>
       </div>
-      <div class="input-field-group">
-        <span class="mobile-label">Interest Rate (%)</span>
-        <input type="number" aria-label="Interest Rate (%)" min="0" max="100" step="0.01" placeholder="5.50" value="${loan.rate}" onchange="updateLoan(${index}, 'rate', parseFloat(this.value))">
-      </div>
-      <div class="input-field-group">
-        <span class="mobile-label">Min. Payment ($)</span>
-        <input type="number" aria-label="Minimum Monthly Payment ($)" min="0" step="5" placeholder="60" value="${loan.minPayment}" onchange="updateLoan(${index}, 'minPayment', parseFloat(this.value))">
-      </div>
-      <button type="button" class="btn icon-delete" onclick="removeLoanRow(${index})" title="Delete Loan" aria-label="Delete ${loan.name}">✕</button>
     `;
-    loansContainer.appendChild(row);
+    loansContainer.appendChild(card);
   });
 }
 
 function updateLoan(index, field, value) {
   loans[index][field] = value;
   clearValidationError();
+  if (hasCalculated) runPayoffCalculation();
 }
 
 function addLoanRow() {
@@ -74,6 +85,7 @@ function removeLoanRow(index) {
   loans.splice(index, 1);
   clearValidationError();
   renderLoanInputs();
+  if (hasCalculated) runPayoffCalculation();
 }
 
 function loadSampleData() {
@@ -84,6 +96,7 @@ function loadSampleData() {
   ];
   clearValidationError();
   renderLoanInputs();
+  if (hasCalculated) runPayoffCalculation();
 }
 
 // Input Validation Helper
@@ -108,7 +121,7 @@ function validateInputs(extraBudget) {
     } else if (!isNaN(loan.balance) && !isNaN(loan.rate) && loan.balance > 0) {
       const firstMonthInterest = loan.balance * ((loan.rate / 100) / 12);
       if (loan.minPayment <= firstMonthInterest) {
-        errors.push(`${label}: Minimum payment ($${loan.minPayment.toFixed(2)}) must exceed first-month interest ($${firstMonthInterest.toFixed(2)}) so the balance can decrease.`);
+        errors.push(`${label}: Minimum payment ($${loan.minPayment.toFixed(2)}) must exceed first-month interest ($${firstMonthInterest.toFixed(2)}).`);
       }
     }
   });
@@ -118,11 +131,10 @@ function validateInputs(extraBudget) {
 
 function showValidationError(errors) {
   validationErrorBanner.innerHTML = `
-    <strong>Please fix the following before calculating:</strong>
+    <strong>Please fix the following:</strong>
     <ul>${errors.map(err => `<li>${err}</li>`).join("")}</ul>
   `;
   validationErrorBanner.style.display = "block";
-  resultsSection.style.display = "none";
 }
 
 function clearValidationError() {
@@ -142,40 +154,38 @@ function runPayoffCalculation() {
   }
 
   clearValidationError();
+  hasCalculated = true;
   const strategy = document.querySelector('input[name="strategy"]:checked').value;
 
-  // Run calculation for chosen strategy
   const currentRun = simulatePayoff(loans, extraBudget, strategy);
-  
-  // Run calculation for alternate strategy (Avalanche vs Snowball)
   const altStrategy = strategy === "avalanche" ? "snowball" : "avalanche";
   const altRun = simulatePayoff(loans, extraBudget, altStrategy);
-
-  // Run baseline calculation ($0 extra budget) for the visual chart comparison
   const baselineRun = simulatePayoff(loans, 0, strategy);
 
   generatedSchedule = currentRun.schedule;
 
   // Update UI Metrics
-  document.getElementById("metric-total-balance").innerText = `$${currentRun.initialBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-  document.getElementById("metric-min-payment").innerText = `$${currentRun.totalMinPayment.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-  document.getElementById("metric-payoff-time").innerText = `${currentRun.totalMonths} mos (${(currentRun.totalMonths / 12).toFixed(1)} yrs)`;
-  document.getElementById("metric-total-interest").innerText = `$${currentRun.totalInterestPaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+  document.getElementById("metric-total-balance").innerText = `$${currentRun.initialBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+  document.getElementById("metric-min-payment").innerText = `$${currentRun.totalMinPayment.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+  document.getElementById("metric-payoff-time").innerText = `${currentRun.totalMonths} mos`;
+  document.getElementById("metric-total-interest").innerText = `$${currentRun.totalInterestPaid.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
 
   // Strategy comparison message
   const interestSaved = altRun.totalInterestPaid - currentRun.totalInterestPaid;
   const banner = document.getElementById("comparison-banner");
 
   if (strategy === "avalanche" && interestSaved > 0.01) {
-    banner.innerText = `Avalanche strategy saves you $${interestSaved.toFixed(2)} in interest compared to Snowball!`;
+    banner.innerText = `Avalanche saves you $${interestSaved.toFixed(2)} in interest compared to Snowball!`;
   } else if (strategy === "snowball" && interestSaved < -0.01) {
-    banner.innerText = `Snowball strategy costs $${Math.abs(interestSaved).toFixed(2)} more in interest than Avalanche, but pays off small loans fastest.`;
+    banner.innerText = `Snowball costs $${Math.abs(interestSaved).toFixed(2)} more in interest than Avalanche, but clears small loans fastest.`;
   } else {
     banner.innerText = `Both strategies yield equivalent results for this portfolio setup.`;
   }
 
   renderBurndownChart(currentRun, baselineRun, strategy, extraBudget);
   renderScheduleTable(currentRun.schedule);
+
+  emptyStateSection.style.display = "none";
   resultsSection.style.display = "block";
 }
 
@@ -196,7 +206,6 @@ function simulatePayoff(inputLoans, extraPayment, strategy) {
     let monthlyInterestPaid = 0;
     let monthlyPrincipalPaid = 0;
 
-    // 1. Accrue Interest & Pay Minimums
     activeLoans.forEach(loan => {
       if (loan.balance > 0) {
         let monthlyRate = (loan.rate / 100) / 12;
@@ -210,7 +219,6 @@ function simulatePayoff(inputLoans, extraPayment, strategy) {
       }
     });
 
-    // 2. Sort remaining active loans based on selected strategy
     let targetLoans = activeLoans.filter(l => l.balance > 0);
     if (strategy === "avalanche") {
       targetLoans.sort((a, b) => b.rate - a.rate);
@@ -218,7 +226,6 @@ function simulatePayoff(inputLoans, extraPayment, strategy) {
       targetLoans.sort((a, b) => a.balance - b.balance);
     }
 
-    // 3. Apply Extra Budget to Target Loan
     let remainingExtra = extraPayment;
     for (let loan of targetLoans) {
       if (remainingExtra <= 0) break;
@@ -290,7 +297,6 @@ function renderBurndownChart(currentRun, baselineRun, strategy, extraBudget) {
     }
   ];
 
-  // Show baseline dashed line when user adds extra monthly budget
   if (extraBudget > 0) {
     datasets.push({
       label: "Minimum Payments Only ($0 extra)",
