@@ -33,15 +33,25 @@
         <button type="button" id="add-loan-btn" class="btn secondary full-width">+ Add Another Loan</button>
       </section>
 
-      <!-- Step 2 Card -->
+      <!-- Step 2 Card: Interactive Range Slider + Preset Chips -->
       <section class="card step-card">
         <div class="step-badge">Step 2</div>
         <h2>Extra Monthly Budget</h2>
-        <p class="step-description">Amount paid each month above required minimums.</p>
+        <p class="step-description">Drag the slider or enter an amount paid above minimums.</p>
         
         <div class="form-group inline">
           <label for="extra-budget">Extra Payment ($/mo):</label>
-          <input type="number" id="extra-budget" value="150" min="0" step="10">
+          <input type="number" id="extra-budget" value="150" min="0" max="2000" step="10">
+        </div>
+
+        <input type="range" id="extra-budget-slider" class="budget-slider" min="0" max="1000" step="25" value="150" aria-label="Extra Monthly Budget Slider">
+
+        <div class="preset-chips">
+          <button type="button" class="chip-btn" data-amount="0">$0 (Min Only)</button>
+          <button type="button" class="chip-btn" data-amount="100">+$100</button>
+          <button type="button" class="chip-btn active" data-amount="150">+$150</button>
+          <button type="button" class="chip-btn" data-amount="300">+$300</button>
+          <button type="button" class="chip-btn" data-amount="500">+$500</button>
         </div>
       </section>
 
@@ -98,8 +108,9 @@
             <span class="metric-value" id="metric-min-payment">$0</span>
           </div>
           <div class="metric-card highlight">
-            <span class="metric-label">Debt-Free In</span>
-            <span class="metric-value" id="metric-payoff-time">0 mos</span>
+            <span class="metric-label">Debt-Free Target</span>
+            <span class="metric-value" id="metric-payoff-time">—</span>
+            <span class="metric-sub" id="metric-payoff-date">0 months total</span>
           </div>
           <div class="metric-card highlight">
             <span class="metric-label">Total Interest</span>
@@ -128,7 +139,7 @@
           <table id="schedule-table">
             <thead>
               <tr>
-                <th>Month</th>
+                <th>Date</th>
                 <th>Total Paid</th>
                 <th>Principal</th>
                 <th>Interest</th>
